@@ -4,6 +4,7 @@
 *.dll
 *.so
 *.dylib
+*.pdb
 
 # Test binary, built with `go test -c`
 *.test
@@ -17,3 +18,16 @@ vendor/
 
 .idea
 
+*.suo
+*.user
+.vs/
+[Bb]in/
+[Oo]bj/
+_UpgradeReport_Files/
+[Pp]ackages/
+node_modules/
+package-lock.json
+
+Thumbs.db
+Desktop.ini
+.DS_Store
