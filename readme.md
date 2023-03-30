@@ -27,22 +27,17 @@ External-id should be a unique id for each call/conversation
 * Model:  
    ```
   { 
-    externalId: "string",
-    numberOfSpeakers: int,
-    phoneNumber: "string",
-    title: "string",
+    externalId: "string", //required
+    numberOfSpeakers: int, //required
+    phoneNumber: "string", //required
+    title: "string", //required
     labels: ["string", "array"],
-    datetime: datetime,
-    outcome: "string",
+    datetime: datetime, //required
+    outcome: "string", 
     outcomeReason: "string",
-    agentId : "string",
-    agentName: "string",
-    agentEmail: "string",
-    nps: float,
-    score: "string",
-    direction: "string",
-    timeToAnswer: int,
-    channel: "string",
+    agentId : "string", //required
+    agentName: "string", //required 
+    agentEmail: "string", //required    
     caseId: "string"  
   }
   ```
