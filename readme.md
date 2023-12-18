@@ -47,6 +47,7 @@ External-id should be a unique id for each call/conversation
 
 The V2 endpoint supports more custom properties and is more closely tied to the underlying conversation model. To upgrade from V1 use the following mappings:
 
+```
 externalId => externalIdentity
 numberOfSpeakers => audioChannels (default is "stereo" so if your audio file is stereo you can omit this property. Other options are "Mono1Speaker" or "Mono2Speaker")
 phoneNumber => customer
@@ -54,13 +55,14 @@ title => subject
 outcome => CustomProp1
 outcomeReason => CustomProp2
 caseId => CustomProp3
-
+```
 ### Added 
 
+```
 customerCompany 
 customProp4-10 (for string values)
 customNumberProp1-10 (for numbers)
-
+```
 ### Audio
  
 * Path: /v1/audio/{capturi-conversation-id}
