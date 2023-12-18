@@ -59,6 +59,7 @@ caseId => CustomProp3
 ### Added 
 
 ```
+salesPersonAudioChannel (1 for left 2 for right)
 customerCompany 
 customProp4-10 (for string values)
 customNumberProp1-10 (for numbers)
