@@ -19,34 +19,6 @@ The base url is https://integrations.capturi.ai
 
 ### Create conversation
 
-External-id should be a unique id for each call/conversation
-
-* Path: /v1/conversation
-* Method: POST
-* Content-Type: json
-* Model:  
-   ```
-  { 
-    externalId: "string", //required
-    numberOfSpeakers: int, //required
-    phoneNumber: "string", //required
-    title: "string", //required
-    labels: ["string", "array"],
-    datetime: datetime, //required
-    outcome: "string", 
-    outcomeReason: "string",
-    agentId : "string", //required
-    agentName: "string", //required 
-    agentEmail: "string", //required    
-    caseId: "string"  
-  }
-  ```
-* Returns: Capturi conversation id.
-
-### V2 endpoint
-
-The V2 endpoint supports more custom properties and is more closely tied to the underlying conversation model. To upgrade from V1 use the following mappings:
-* 
 * Path: /v2/conversation
 * Method: POST
 * Content-Type: json
@@ -92,6 +64,7 @@ The V2 endpoint supports more custom properties and is more closely tied to the 
 }
 ```
 
+#### V2 changes
 
 ```
 externalId => externalIdentity
