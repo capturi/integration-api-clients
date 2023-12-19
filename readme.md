@@ -47,9 +47,50 @@ External-id should be a unique id for each call/conversation
 
 The V2 endpoint supports more custom properties and is more closely tied to the underlying conversation model. To upgrade from V1 use the following mappings:
 
+* Model:
+
+```
+{
+  "agentEmail": "schmidt@capturi.com", //required
+  "agentId": "1234", //required
+  "agentName": "Agent Schmidt", //required
+  "audioChannels": "Mono1Speaker, Mono2Speaker, Stereo", //optional - Stereo is default
+  "customNumberProp1": 0, //optional 
+  "customNumberProp10": 0, //optional 
+  "customNumberProp2": 0, //optional 
+  "customNumberProp3": 0, //optional 
+  "customNumberProp4": 0, //optional 
+  "customNumberProp5": 0, //optional 
+  "customNumberProp6": 0, //optional 
+  "customNumberProp7": 0, //optional 
+  "customNumberProp8": 0, //optional 
+  "customNumberProp9": 0, //optional 
+  "customProp1": "Some custom data - must be configured in capturi", //optional 
+  "customProp10": "string", //optional 
+  "customProp2": "string", //optional  
+  "customProp3": "string", //optional 
+  "customProp4": "string", //optional 
+  "customProp5": "string", //optional 
+  "customProp6": "string", //optional 
+  "customProp7": "string", //optional 
+  "customProp8": "string", //optional 
+  "customProp9": "string", //optional 
+  "customer": "+4522446688", //required
+  "customerCompany": "Capturi", //optional 
+  "dateTime": "string", //required
+  "externalIdentity": "1234 id from external system - must be unique", //required
+  "labels": [
+    "Inbound",
+    "callback"
+  ], //optional 
+  "salesPersonAudioChannel": 1, //optional (1 for left(default), 2 for right) 
+  "status": "closed", //optional 
+  "subject": "Customer service queue 1" //required
+}
+
 ```
 externalId => externalIdentity
-numberOfSpeakers => audioChannels (default is "stereo" so if your audio file is stereo you can omit this property. Other options are "Mono1Speaker" or "Mono2Speaker")
+numberOfSpeakers => audioChannels 
 phoneNumber => customer
 title => subject
 outcome => CustomProp1
@@ -59,10 +100,10 @@ caseId => CustomProp3
 ### Added 
 
 ```
-salesPersonAudioChannel (1 for left 2 for right)
+salesPersonAudioChannel 
 customerCompany 
-customProp4-10 (for string values)
-customNumberProp1-10 (for numbers)
+customProp4-10 
+customNumberProp1-10 
 ```
 ### Audio
  
