@@ -46,7 +46,10 @@ External-id should be a unique id for each call/conversation
 ### V2 endpoint
 
 The V2 endpoint supports more custom properties and is more closely tied to the underlying conversation model. To upgrade from V1 use the following mappings:
-
+* 
+* Path: /v2/conversation
+* Method: POST
+* Content-Type: json
 * Model:
 
 ```
