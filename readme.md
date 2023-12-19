@@ -43,7 +43,7 @@ External-id should be a unique id for each call/conversation
   ```
 * Returns: Capturi conversation id.
 
-## V2 endpoint
+### V2 endpoint
 
 The V2 endpoint supports more custom properties and is more closely tied to the underlying conversation model. To upgrade from V1 use the following mappings:
 
@@ -87,6 +87,8 @@ The V2 endpoint supports more custom properties and is more closely tied to the 
   "status": "closed", //optional 
   "subject": "Customer service queue 1" //required
 }
+```
+
 
 ```
 externalId => externalIdentity
@@ -97,7 +99,7 @@ outcome => CustomProp1
 outcomeReason => CustomProp2
 caseId => CustomProp3
 ```
-### Added 
+#### Added 
 
 ```
 salesPersonAudioChannel 
@@ -105,6 +107,7 @@ customerCompany
 customProp4-10 
 customNumberProp1-10 
 ```
+
 ### Audio
  
 * Path: /v1/audio/{capturi-conversation-id}
