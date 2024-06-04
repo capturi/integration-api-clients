@@ -72,17 +72,17 @@ Group names syncing to capturi must follow the following naming conventions:
 
 Administative roles:
 
-* To give users administrative role, add them to a group with the following name: 'capturi_role_admins'  
-* To give users owner role, add them to a group with the following name: 'capturi_role_owners'  
+* To give users administrative role, add them to a group with the following name: '**capturi_role_admins**'  
+* To give users owner role, add them to a group with the following name: '**capturi_role_owners**'  
 
 For users not in Teams:
 
-* Add them to a group with the following format: 'capturi_users_description' (eg: capturi_this-is-capturi-users)
+* Add them to a group with the following format: '**capturi_users_description**' (eg: capturi_this-is-capturi-users)
 
 For users in Teams:
 
-* Add users to a group with the following format: 'capturi_team_teamName' (Teams will be created in Capturi with the name provided)
-* Set users as team lead for team,  Add users to a group with the following format: 'capturi_teamlead_teamName_teamExternalId' (teamExternalId is found under the team group. Click on the group in Entra Id, and copy the "object Id" field)
+* Add users to a group with the following format: '**capturi_team_teamName**' (Teams will be created in Capturi with the name provided)
+* Set users as team lead for team,  Add users to a group with the following format: '**capturi_teamlead_teamName_teamExternalId**' (teamExternalId is found under the team group. Click on the group in Entra Id, and copy the "object Id" field)
 
  
 
