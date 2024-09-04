@@ -86,4 +86,6 @@ For users in Teams:
 
  
 
+## Troubleshooting / Monitoring
 
+When SCIM is configured Capturi will provide a logging link that can be used by the AD administrator to see logs, errors, users, groups etc. for their own organization.
