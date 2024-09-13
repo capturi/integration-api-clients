@@ -61,7 +61,7 @@ The base url is https://integrations.capturi.ai
   "salesPersonAudioChannel": 1, //optional (1 for left(default), 2 for right) 
   "status": "closed", //optional 
   "subject": "Customer service queue 1", //required
-  "hasConsent" : "true" //optional defaults to true. Conversations with this set to false will be analysed, insights will anonymised and kept and the recording will be deleted. 
+  "hasConsent" : true //optional defaults to true. Conversations with this set to false will be analysed, insights will anonymised and kept and the recording will be deleted. 
 }
 ```
 
