@@ -72,8 +72,10 @@ Group names syncing to capturi must follow the following naming conventions:
 
 Administative roles:
 
-* To give users administrative role, add them to a group with the following name: '**capturi_role_admins**'  
-* To give users owner role, add them to a group with the following name: '**capturi_role_owners**'  
+* To give users administrative role, add them to a group with the following name: '**capturi_role_admins**'
+  If you want to add a description to the group you can name the group '**capturi_role_admins_description**'
+* To give users owner role, add them to a group with the following name: '**capturi_role_owners**'
+  If you want to add a description to the group you can name the group '**capturi_role_owners_description**'    
 
 For users not in Teams:
 
