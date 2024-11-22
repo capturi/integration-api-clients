@@ -54,6 +54,12 @@ The base url is https://integrations.capturi.ai
   "customerCompany": "Capturi", //optional 
   "dateTime": "string", //required
   "externalIdentity": "1234 id from external system - must be unique", //required
+  "conversationSegments": [
+  {
+      "durationSeconds": 25,
+      "startSeconds": 10
+  }
+  ],// optional
   "labels": [
     "Inbound",
     "callback"
@@ -61,6 +67,7 @@ The base url is https://integrations.capturi.ai
   "salesPersonAudioChannel": 1, //optional (1 for left(default), 2 for right) 
   "status": "closed", //optional 
   "subject": "Customer service queue 1", //required
+  "teamName" : "Team 1", // Optional
   "hasConsent" : true //optional defaults to true. Conversations with this set to false will be analysed, insights will anonymised and kept and the recording will be deleted. 
 }
 ```
@@ -82,7 +89,9 @@ caseId => CustomProp3
 salesPersonAudioChannel 
 customerCompany 
 customProp4-10 
-customNumberProp1-10 
+customNumberProp1-10
+team
+conversationSegments
 ```
 
 ### Audio
