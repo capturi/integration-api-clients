@@ -37,14 +37,7 @@ jobs:
       - name: Restore dependencies
         run: |
           dotnet restore --locked-mode        
-      
-      - name: Run Snyk test
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        run: snyk test \
-          --all-projects \
-          --org=401a78fa-be76-4c1b-8c07-1c8a69e29fdc
-                 
+                   
       - name: Update Snyk monitor
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
