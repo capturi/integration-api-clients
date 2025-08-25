@@ -1,0 +1,47 @@
+name: Snyk test and monitor
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  snykking:
+    name: Snyk Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        
+      - name: Setup Snyk
+        uses: snyk/actions/setup@master
+
+      - name: Setup .Net
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9
+
+      - name: Add Capturi private NuGet source
+        run: |
+          dotnet nuget add source \
+            --username ${{ github.actor }} \
+            --password ${{ secrets.GITHUB_TOKEN }} \
+            --store-password-in-clear-text \
+            --name github \
+            https://nuget.pkg.github.com/capturi/index.json
+
+      - name: Restore dependencies
+        run: |
+          dotnet restore --locked-mode        
+                   
+      - name: Update Snyk monitor
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        run: snyk monitor \
+          --all-projects \
+          --org=401a78fa-be76-4c1b-8c07-1c8a69e29fdc \
+          --remote-repo-url=https://github.com/capturi/integration-api-clients
