@@ -1,0 +1,115 @@
+name: CI Test
+on:
+  workflow_dispatch:
+  pull_request:
+    types: [ opened, reopened, synchronize ]
+
+jobs:
+  security_check:
+    name: Security Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Setup Snyk
+        uses: snyk/actions/setup@master
+
+      - name: setup go
+        uses: actions/setup-go@v6
+        with:
+          go-version: '1.17'
+
+      - name: Setup .Net
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 9
+
+      - name: Allow access to private Go modules
+        run: |
+          # Tell Go to skip the public proxy/checksum DB for your org's modules
+          go env -w GOPRIVATE=github.com/capturi/*
+
+          # Use your PAT for any Git fetch from GitHub over HTTPS
+          git config --global url."https://${{ github.actor }}:${{ secrets.GO_DOCKER_PRIVATE_REPO_PAT }}@github.com/".insteadOf "https://github.com/"
+
+      - name: Add Capturi private NuGet source
+        run: |
+          dotnet nuget add source \
+            --username ${{ github.actor }} \
+            --password ${{ secrets.GITHUB_TOKEN }} \
+            --store-password-in-clear-text \
+            --name github \
+            https://nuget.pkg.github.com/capturi/index.json
+
+      - name: Restore go dependencies
+        run: go mod download
+
+      - name: Restore .Net dependencies
+        run: |
+          dotnet restore
+
+      - name: Check for vulnerabilities
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        run: snyk test \
+          --all-projects \
+          --org=401a78fa-be76-4c1b-8c07-1c8a69e29fdc
+
+  code_scan:
+    name: Code Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Setup Snyk
+        uses: snyk/actions/setup@master
+
+      - name: setup go
+        uses: actions/setup-go@v6
+        with:
+          go-version: '1.17'
+
+      - name: Setup .Net
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 9
+
+      - name: Allow access to private Go modules
+        run: |
+          # Tell Go to skip the public proxy/checksum DB for your org's modules
+          go env -w GOPRIVATE=github.com/capturi/*
+
+          # Use your PAT for any Git fetch from GitHub over HTTPS
+          git config --global url."https://${{ github.actor }}:${{ secrets.GO_DOCKER_PRIVATE_REPO_PAT }}@github.com/".insteadOf "https://github.com/"
+
+      - name: Add Capturi private NuGet source
+        run: |
+          dotnet nuget add source \
+            --username ${{ github.actor }} \
+            --password ${{ secrets.GITHUB_TOKEN }} \
+            --store-password-in-clear-text \
+            --name github \
+            https://nuget.pkg.github.com/capturi/index.json
+
+      - name: Restore go dependencies
+        run: go mod download
+
+      - name: Restore .Net dependencies
+        run: |
+          dotnet restore
+
+      - name: Check for vulnerabilities
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        run: snyk code test \
+          --org=401a78fa-be76-4c1b-8c07-1c8a69e29fdc
