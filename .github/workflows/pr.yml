@@ -102,10 +102,13 @@ jobs:
             https://nuget.pkg.github.com/capturi/index.json
 
       - name: Restore go dependencies
-        run: go mod download
+        run: |
+          cd go
+          go mod download
 
       - name: Restore .Net dependencies
         run: |
+          cd dotnet-csharp/AudioUploadClientExample
           dotnet restore
 
       - name: Check for vulnerabilities
