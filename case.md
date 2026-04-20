@@ -1,91 +1,37 @@
 # Case Management API
 
-REST API for creating, updating, and managing email cases in Capturi. Supports full CRUD operations with message threading and custom metadata fields.
+REST API for creating, updating, and managing email/text cases in Capturi. Supports full CRUD operations with message threading and custom metadata fields.
+
+## Base URL
+
+```
+https://integrations.capturi.ai
+```
+
+## Authentication
+
+See [readme.md](readme.md#authentication) for authentication details.
 
 ## Implementation Notes
 
-- Self-managed integration - you control data flow and error handling
 - Custom fields support arbitrary key-value metadata (max 10 fields)
-- All timestamps must be RFC3339 formatted
+- All timestamps must be ISO 8601 / RFC 3339 formatted
 - HTML content is automatically stripped from message text
-- Maximum 10 custom fields per case (alphanumeric keys only)
+- Custom field names must be alphanumeric only (regex: `/^[a-zA-Z0-9]+$/`)
+- Empty custom field values are silently ignored
+
+---
 
 ## API Endpoints
 
-### Create or Update Case (PUT)
-**Endpoint:** `PUT /v1/case`
-
-Creates a new case or updates an existing one if it exists with the given CaseUid. Note that updating will overwrite all existing fields with the provided values.
-
-### Add Message and Create Case (PUT)
-**Endpoint:** `PUT /v1/case/messages`
-
-Adds a new message to a case. If the case doesn't exist it will be created.
-
-### Add Message to Existing Case (POST)
-**Endpoint:** `POST /v1/case/messages`
-
-Adds a new message to a case. If the case doesn't exist the api will return a 204.
-
-### Patch Case (PATCH)
-**Endpoint:** `PATCH /v1/case/{externalID}`
-
-Patches an existing case. If any fields are missing the api will update the ones that are present. Patching will only overwrite fields that are present.
-
-## Schema Requirements
-
-### Required Fields
-```typescript
-{
-  caseUid: string;        // Unique case identifier
-  source: string;         // Source system identifier
-  created: Date;          // ISO 8601 timestamp
-  updated: Date;          // ISO 8601 timestamp  
-  subject: string;        // Case subject (non-empty)
-  messages: Message[];    // Minimum 1 message for PUT operations
-}
-```
-
-### Optional Fields
-```typescript
-{
-  inbox?: string;         // Target inbox/routing
-  status?: string;        // Case lifecycle status
-  tags?: string[];        // Classification labels (no duplicates)
-  customFields?: Array<{  // Max 10 fields, alphanumeric keys only
-    name: string;         // Regex: /^[a-zA-Z0-9]+$/
-    value: string;
-  }>;
-  priority?: string;      // Business priority level
-}
-```
-
-### Message Schema
-```typescript
-{
-  messageUid: string;           // Unique message ID
-  created: Date;                // ISO 8601 timestamp
-  direction: "Inbound" | "Outbound";
-  from: {
-    name: string;
-    email: string;
-    id: string;
-  };
-  to: Array<{
-    name: string;
-    email: string;
-    id?: string;
-  }>;
-  subject: string;
-  text: string;                 // HTML automatically stripped
-  type: string;                 // Message type identifier
-  attachments?: string[];       // File reference IDs
-}
-```
-
-## Request Examples
-
 ### Create or Update Case
+
+**`PUT /v1/case`**
+
+Creates a new case or updates an existing one if a case with the given `caseUid` already exists. **Updating overwrites all existing fields** with the provided values.
+
+#### Request Body
+
 ```json
 {
   "caseUid": "case-12345",
@@ -95,16 +41,11 @@ Patches an existing case. If any fields are missing the api will update the ones
   "subject": "Customer Support Request",
   "inbox": "support@company.com",
   "status": "open",
+  "priority": "high",
   "tags": ["support", "urgent"],
   "customFields": [
-    {
-      "name": "customerType",
-      "value": "premium"
-    },
-    {
-      "name": "productVersion",
-      "value": "2.1.0"
-    }
+    { "name": "customerType", "value": "premium" },
+    { "name": "productVersion", "value": "2.1.0" }
   ],
   "messages": [
     {
@@ -132,7 +73,60 @@ Patches an existing case. If any fields are missing the api will update the ones
 }
 ```
 
-### Add Single Message to Case
+#### Field Reference
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `caseUid` | string | ✅ | Unique case identifier from your system |
+| `source` | string | ✅ | Source system identifier |
+| `created` | string (ISO 8601) | ✅ | When the case was created |
+| `updated` | string (ISO 8601) | ✅ | When the case was last updated |
+| `subject` | string | ✅ | Case subject |
+| `inbox` | string | ❌ | Target inbox/routing |
+| `status` | string | ❌ | Case lifecycle status |
+| `priority` | string | ❌ | Business priority level |
+| `tags` | string[] | ❌ | Classification labels |
+| `customFields` | object[] | ❌ | Max 10 fields, alphanumeric keys only |
+| `messages` | Message[] | ✅ | At least one message required |
+
+#### Message Object
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `messageUid` | string | ✅ | Unique message ID |
+| `created` | string (ISO 8601) | ✅ | When the message was created |
+| `type` | string | ❌ | Message type identifier (e.g. `"email"`) |
+| `direction` | string | ✅ | `"Inbound"` or `"Outbound"` |
+| `from` | Contact | ✅ | Sender information |
+| `to` | Contact[] | ✅ | Recipient(s) |
+| `subject` | string | ❌ | Message subject |
+| `text` | string | ✅ | Message body (HTML is automatically stripped) |
+| `attachments` | string[] | ❌ | File reference IDs |
+
+#### Contact Object
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `name` | string | ✅ | Contact display name |
+| `email` | string | ✅ | Contact email address |
+| `id` | string | ❌ | Contact identifier (used for agent lookup on outbound messages) |
+
+#### Response
+
+- **200 OK** on success
+
+> **Note:** For outbound messages, the `from.id`, `from.email`, and `from.name` fields are used to create or look up the agent in Capturi.
+
+---
+
+### Add Message and Create Case If Not Exists
+
+**`PUT /v1/case/messages`**
+
+Adds a single message to a case. If the case doesn't exist, it will be created. **Case metadata fields are overwritten** if the case already exists.
+
+#### Request Body
+
 ```json
 {
   "caseUid": "case-12345",
@@ -144,10 +138,7 @@ Patches an existing case. If any fields are missing the api will update the ones
   "status": "in-progress",
   "tags": ["support"],
   "customFields": [
-    {
-      "name": "priority",
-      "value": "high"
-    }
+    { "name": "priority", "value": "high" }
   ],
   "message": {
     "messageUid": "msg-002",
@@ -167,87 +158,191 @@ Patches an existing case. If any fields are missing the api will update the ones
       }
     ],
     "subject": "Re: Help with login issues",
-    "text": "Hi John, I can help you with the login issue. Please try...",
+    "text": "Hi John, I can help you with the login issue...",
     "attachments": []
   }
 }
 ```
 
+> **Note:** This endpoint uses `"message"` (singular) unlike the PUT `/v1/case` endpoint which uses `"messages"` (plural array).
+
+#### Field Reference
+
+Same case-level fields as the Create or Update endpoint above, plus a single `message` object (same schema as the Message Object).
+
+#### Response
+
+- **200 OK** on success
+
+---
+
 ### Add Message to Existing Case
+
+**`POST /v1/case/messages`**
+
+Adds a message to an existing case. **If the case doesn't exist, the API returns 200 with no action taken** (the message is silently dropped).
+
+#### Request Body
+
 ```json
 {
   "caseUid": "case-12345",
-  "messageUid": "msg-003",
-  "created": "2024-01-15T12:00:00Z",
-  "type": "email",
-  "direction": "Inbound",
-  "from": {
-    "name": "John Customer",
-    "email": "john@customer.com",
-    "id": "cust-123"
-  },
-  "to": [
-    {
-      "name": "Support Agent",
-      "email": "agent@company.com",
-      "id": "agent-456"
-    }
-  ],
-  "subject": "Re: Help with login issues",
-  "text": "Thank you! That fixed the issue.",
-  "attachments": []
+  "message": {
+    "messageUid": "msg-003",
+    "created": "2024-01-15T12:00:00Z",
+    "type": "email",
+    "direction": "Inbound",
+    "from": {
+      "name": "John Customer",
+      "email": "john@customer.com",
+      "id": "cust-123"
+    },
+    "to": [
+      {
+        "name": "Support Agent",
+        "email": "agent@company.com",
+        "id": "agent-456"
+      }
+    ],
+    "subject": "Re: Help with login issues",
+    "text": "Thank you! That fixed the issue.",
+    "attachments": []
+  }
 }
 ```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `caseUid` | string | ✅ | Case to add the message to |
+| `message` | Message | ✅ | The message to add (see Message Object above) |
+
+#### Response
+
+- **200 OK** on success (even if case doesn't exist)
+
+---
 
 ### Patch Case
+
+**`PATCH /v1/case/{externalID}`**
+
+Patches an existing case. Only fields present in the request body are updated — missing fields are left unchanged.
+
+#### Request Body
+
 ```json
 {
-  "status": "resolved",
   "updated": "2024-01-15T13:00:00Z",
+  "status": "resolved",
+  "subject": "Updated subject",
+  "inbox": "resolved@company.com",
+  "tags": ["resolved", "support"],
   "customFields": [
-    {
-      "name": "resolutionTime",
-      "value": "3 hours"
-    },
-    {
-      "name": "satisfaction",
-      "value": "5"
-    }
+    { "name": "resolutionTime", "value": "3 hours" },
+    { "name": "satisfaction", "value": "5" }
   ],
-  "onlyUpdateCustomFields": false
+  "onlyUpdateCustomFields": false,
+  "messages": [
+    {
+      "externalUid": "msg-004",
+      "created": "2024-01-15T13:00:00Z",
+      "type": "Outbound",
+      "from": {
+        "email": "agent@company.com",
+        "name": "Support Agent"
+      },
+      "to": [
+        {
+          "email": "john@customer.com",
+          "name": "John Customer"
+        }
+      ],
+      "subject": "Case resolved",
+      "text": "Your case has been resolved."
+    }
+  ]
 }
 ```
 
-## Validation Requirements
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `externalUid` | string | ❌ | External UID override |
+| `updated` | string (ISO 8601) | ❌ | Updated timestamp |
+| `subject` | string | ❌ | Case subject |
+| `inbox` | string | ❌ | Target inbox |
+| `status` | string | ❌ | Case status |
+| `tags` | string[] | ❌ | Classification labels (replaces existing) |
+| `customFields` | object[] | ❌ | Custom fields to update |
+| `onlyUpdateCustomFields` | bool | ❌ | When `true`, only custom fields are updated |
+| `messages` | object[] | ❌ | Messages to add/update |
 
-Cases are validated with the following rules:
-- **caseUid**: Required, cannot be null, empty, or whitespace
-- **source**: Required, cannot be null, empty, or whitespace  
-- **created**: Required, must be valid timestamp
-- **updated**: Required, must be valid timestamp
-- **subject**: Required, cannot be empty or whitespace
-- **tags**: Cannot contain null values or duplicates, all tags must be non-empty
-- **customFields**: Maximum 10 custom fields allowed, keys must match pattern `/^[a-zA-Z0-9]+$/`
-- **messages**: Required for create/update operations, cannot be null or empty
+#### Response
 
-## Custom Fields
+- **200 OK** on success
 
-Custom fields provide flexible metadata storage with the following constraints:
-- Maximum 10 custom fields per case
-- Field names must contain only alphanumeric characters
-- Field values are stored as strings
-- Custom fields can be used for filtering, reporting, and business logic
+---
+
+## Zendesk Integration Example
+
+### Webhook Setup
+
+Create a webhook pointing to this URL using a **PUT** request:
+
+```
+https://integrations.capturi.ai/v1/case/messages
+```
+
+Select API key authentication, set the header to `"Authorization"` and input the API key from Capturi.
+
+![webhook](zendesk_create_webhook.png)
+
+### Trigger Setup
+
+Create two triggers sending all creates and updates to the webhook. Create a condition that filters on either "End-user" and "Agent".
+
+The first trigger should set direction to `"Inbound"`, the other to `"Outbound"`.
+
+Use the following template (fields can be modified, but the provided fields are required):
+
+```json
+{
+  "caseUid": "{{ticket.id}}",
+  "created": "{{ticket.created_at_with_timestamp}}",
+  "inbox": "{{ticket.group.name}}",
+  "message": {
+    "direction": "Inbound",
+    "created": "{{ticket.updated_at_with_timestamp}}",
+    "from": {
+      "email": "{{ticket.latest_comment.author.email}}",
+      "id": "{{ticket.latest_comment.author.id}}",
+      "name": "{{ticket.latest_comment.author.name}}"
+    },
+    "messageUid": "{{ticket.latest_comment.id}}",
+    "subject": "{{ticket.title}}",
+    "text": "{{ticket.latest_comment.value}}",
+    "to": [
+      {
+        "email": "{{ticket.assignee.email}}",
+        "id": "{{ticket.assignee.id}}",
+        "name": "{{ticket.assignee.name}}"
+      }
+    ]
+  },
+  "priority": "{{ticket.priority}}",
+  "source": "{{ticket.via}}",
+  "status": "{{ticket.status}}",
+  "subject": "{{ticket.title}}",
+  "updated": "{{ticket.updated_at_with_timestamp}}"
+}
+```
+
+---
 
 ## Error Handling
 
 | Status Code | Description |
 |-------------|-------------|
-| 400 | Bad Request - Invalid JSON, missing required fields, or validation errors |
-| 500 | Internal Server Error - User creation failed or downstream service issues |
-
-## Implementation Notes
-
-- API schema may change without notice - implement defensive parsing
-- Custom field keys are validated server-side with regex `/^[a-zA-Z0-9]+$/`
-- HTML in message text is automatically stripped using server-side sanitization
-- For support issues, reference this documentation or contact support directly
+| 200 | Success |
+| 400 | Bad Request — Invalid JSON, missing required fields, or validation errors |
+| 409 | Conflict — `externalIdentity` / `caseUid` already exists (conversation endpoints) |
+| 500 | Internal Server Error — Downstream service issues |
