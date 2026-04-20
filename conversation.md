@@ -1,82 +1,158 @@
-# Conversation Management API
+# Conversation API
 
 REST API for creating call conversations with metadata for speech-to-text processing in Capturi. Supports custom metadata fields and audio configuration options.
 
+## Base URL
+
+```
+https://integrations.capturi.ai
+```
+
+## Authentication
+
+See [readme.md](readme.md#authentication) for authentication details.
+
 ## Implementation Notes
 
-- Self-managed integration - you handle data flow and error handling
 - Custom properties support flexible metadata (10 text + 9 numeric fields)
-- All timestamps must be RFC3339 formatted
-- ExternalIdentity must be globally unique per organization
-- Audio processing priority determined by conversation age (>24h = low priority)
+- All timestamps must be ISO 8601 / RFC 3339 formatted
+- `externalIdentity` must be unique per organization
+- Audio processing priority is determined by conversation age (>24h = low priority)
+
+---
 
 ## API Endpoints
 
-### Create Conversation (POST)
-**Endpoint:** `POST /v2/conversation`
+### Create Conversation v1 (Legacy)
 
-Creates a new conversation with the provided metadata. The conversation will be processed for speech-to-text analysis if audio is uploaded subsequently.
+**`POST /v1/conversation`**
 
-## Schema Requirements
+> **Note:** v1 is maintained for backward compatibility. Use v2 or v3 for new integrations.
 
-### Required Fields
-```typescript
+#### Request Body
+
+```json
 {
-  externalIdentity: string;    // Globally unique conversation ID
-  agentId: string;            // Agent identifier  
-  agentName: string;          // Agent display name
-  agentEmail: string;         // Agent email address
-  dateTime: Date;             // ISO 8601 timestamp
-  subject: string;            // Conversation topic (non-empty)
-  customer: string;           // Customer identifier (non-empty)
+  "externalId": "1234",
+  "numberOfSpeakers": 1,
+  "phoneNumber": "+4522446688",
+  "title": "Call with Donald Duck",
+  "labels": ["campaign1", "new-product2"],
+  "datetime": "2022-02-25T12:00:00Z",
+  "outcome": "Declined",
+  "outcomeReason": "Competing product won",
+  "caseId": "123",
+  "agentId": "1234",
+  "agentName": "Agent Schmidt",
+  "agentEmail": "schmidt@capturi.com",
+  "agentAudioChannel": "left",
+  "hasConsent": true
 }
 ```
 
-### Optional Fields
-```typescript
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `externalId` | string | ✅ | Unique ID from your system |
+| `numberOfSpeakers` | int | ✅ | `1` = Mono1Speaker, `2` = Mono2Speaker |
+| `phoneNumber` | string | ✅ | Customer phone number |
+| `title` | string | ✅ | Conversation subject/title |
+| `labels` | string[] | ❌ | Classification labels |
+| `datetime` | string (ISO 8601) | ✅ | When the conversation occurred |
+| `outcome` | string | ❌ | Maps to `customProp1` internally |
+| `outcomeReason` | string | ❌ | Maps to `customProp2` internally |
+| `caseId` | string | ❌ | Maps to `customProp3` internally |
+| `agentId` | string | ✅ | Agent identifier in your system |
+| `agentName` | string | ✅ | Agent display name |
+| `agentEmail` | string | ✅ | Agent email address |
+| `agentAudioChannel` | string | ❌ | `"left"` (default) or `"right"` |
+| `hasConsent` | bool | ❌ | Defaults to `true`. When `false`, recording is deleted after analysis and insights are anonymised. |
+
+#### Response
+
+```json
 {
-  customerCompany?: string;           // Customer organization
-  labels?: string[];                 // Classification tags (no duplicates)
-  status?: string;                   // Conversation lifecycle status
-  hasConsent?: boolean;              // Recording consent flag
-  audioChannels?: "Mono1Speaker" | "Mono2Speaker" | "Stereo";
-  salesPersonAudioChannel?: 1 | 2;   // Agent audio channel (stereo only)
-  team?: string;                     // Team assignment
-  cutAudio?: Array<{                 // Audio segment extraction
-    startSeconds: number;            // Start time (≥0)
-    durationSeconds: number;         // Duration (≥1)
-  }>;
+  "UID": "550e8400-e29b-41d4-a716-446655440000"
 }
 ```
 
-### Custom Properties Schema
-```typescript
+#### Field Mapping (v1 → v2)
+
+| v1 Field | v2 Field |
+|----------|----------|
+| `externalId` | `externalIdentity` |
+| `numberOfSpeakers` | `audioChannels` |
+| `phoneNumber` | `customer` |
+| `title` | `subject` |
+| `outcome` | `customProp1` |
+| `outcomeReason` | `customProp2` |
+| `caseId` | `customProp3` |
+
+---
+
+### Create Conversation v2 (Recommended)
+
+**`POST /v2/conversation`**
+
+Creates a new conversation with the provided metadata. Upload audio separately using the returned UID.
+
+#### Required Fields
+
+```json
 {
-  // Text properties (must be pre-configured in Capturi)
-  customProp1?: string;
-  customProp2?: string;
-  // ... up to customProp10
-  
-  // Numeric properties
-  customNumberProp1?: number;
-  customNumberProp2?: number;  
-  // ... up to customNumberProp9
+  "externalIdentity": "call-12345-2024",
+  "agentId": "agent-001",
+  "agentName": "John Sales",
+  "agentEmail": "john.sales@company.com",
+  "dateTime": "2024-01-15T14:30:00Z",
+  "subject": "Product demo call",
+  "customer": "+45 22 44 66 88"
 }
 ```
 
-## Audio Processing Configuration
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `externalIdentity` | string | ✅ | Unique ID from your system — must be unique per organization |
+| `agentId` | string | ✅ | Agent identifier in your system |
+| `agentName` | string | ✅ | Agent display name |
+| `agentEmail` | string | ✅ | Agent email address |
+| `dateTime` | string (ISO 8601) | ✅ | When the conversation occurred |
+| `subject` | string | ✅ | Conversation subject |
+| `customer` | string | ✅ | Customer identifier (e.g. phone number) |
 
-| Audio Channel | Description | Use Case |
-|---------------|-------------|----------|
-| `Mono1Speaker` | Single channel, one speaker | Phone recordings, single participant |
-| `Mono2Speaker` | Single channel, two speakers | Conference calls mixed to mono |
-| `Stereo` | Two channels | Separate speaker channels |
+#### Optional Fields
 
-**Sales Person Channel**: For stereo recordings, specify which channel (1 or 2) contains the agent audio. Default is channel 1.
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `customerCompany` | string | — | Customer company name |
+| `labels` | string[] | — | Classification labels |
+| `status` | string | — | Conversation lifecycle status |
+| `hasConsent` | bool | `true` | When `false`, recording is deleted after analysis and insights are anonymised. |
+| `audioChannels` | string | `"Stereo"` | `"Mono1Speaker"`, `"Mono2Speaker"`, or `"Stereo"` |
+| `salesPersonAudioChannel` | int | `1` | `1` for left channel, `2` for right channel |
+| `team` | string | — | Team name — created in Capturi if it doesn't exist |
+| `cutAudio` | object[] | — | Audio segments to extract (see below) |
+| `customProp1`–`customProp10` | string | — | Custom text properties (must be configured in Capturi) |
+| `customNumberProp1`–`customNumberProp9` | float | — | Custom numeric properties |
 
-**Cut Audio**: Extract specific time segments for focused analysis. Useful for analyzing key conversation moments without processing entire recordings.
+#### Cut Audio
 
-## Request Example
+Extract specific time segments for focused analysis:
+
+```json
+{
+  "cutAudio": [
+    { "startSeconds": 120, "durationSeconds": 180 },
+    { "startSeconds": 600, "durationSeconds": 300 }
+  ]
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `startSeconds` | int | Segment start time in seconds (≥ 0) |
+| `durationSeconds` | int | Segment duration in seconds (≥ 1) |
+
+#### Full Request Example
 
 ```json
 {
@@ -95,14 +171,8 @@ Creates a new conversation with the provided metadata. The conversation will be 
   "salesPersonAudioChannel": 1,
   "team": "Sales Team A",
   "cutAudio": [
-    {
-      "startSeconds": 120,
-      "durationSeconds": 180
-    },
-    {
-      "startSeconds": 600,
-      "durationSeconds": 300
-    }
+    { "startSeconds": 120, "durationSeconds": 180 },
+    { "startSeconds": 600, "durationSeconds": 300 }
   ],
   "customProp1": "enterprise-tier",
   "customProp2": "product-demo",
@@ -113,58 +183,80 @@ Creates a new conversation with the provided metadata. The conversation will be 
 }
 ```
 
-## Validation Requirements
+#### Response
 
-Conversations are validated with the following rules:
-- **externalIdentity**: Required, cannot be null, empty, or whitespace. Must be unique across all conversations for your organization
-- **agentId**: Required, cannot be empty
-- **agentName**: Required, cannot be empty  
-- **agentEmail**: Required, cannot be empty
-- **dateTime**: Required, must be valid timestamp
-- **subject**: Required, cannot be null, empty, or whitespace
-- **customer**: Required, cannot be null, empty, or whitespace
-- **labels**: Cannot contain null values or duplicates
-- **status**: Required, cannot be null, empty, or whitespace
-- **salesPersonAudioChannel**: Must be 1 or 2 if specified
-- **cutAudio.startSeconds**: Must be 0 or greater
-- **cutAudio.durationSeconds**: Must be 1 or greater
-
-## Custom Properties
-
-Custom properties provide flexible metadata storage:
-- **Text Properties**: 10 custom text fields (customProp1-10)
-- **Number Properties**: 9 custom numeric fields (customNumberProp1-9)  
-- All custom properties must be configured in Capturi before use
-- Contact support to configure custom properties for your organization
-
-## Response Schema
-
-```typescript
+```json
 {
-  uid: string;  // Capturi conversation UUID for subsequent operations
+  "UID": "550e8400-e29b-41d4-a716-446655440000"
 }
 ```
 
+> **Note:** The response field is uppercase `"UID"`. Use this value for subsequent audio uploads.
+
+---
+
+### Create Conversation v3
+
+**`POST /v3/conversation`**
+
+Identical request body to v2 with two differences:
+1. **Stricter validation** — all required fields are validated before processing
+2. **Lowercase response** — returns `"uid"` instead of `"UID"`
+
+#### Validation Rules
+
+All of these are enforced (returns 400 if any fail):
+- `externalIdentity` — must not be empty
+- `agentId` — must not be empty
+- `agentName` — must not be empty
+- `agentEmail` — must not be empty
+- `customer` — must not be empty
+- `dateTime` — must not be empty
+- `subject` — must not be empty
+
+#### Response
+
+```json
+{
+  "uid": "550e8400-e29b-41d4-a716-446655440000"
+}
+```
+
+> **Important:** v3 returns lowercase `"uid"`, unlike v1/v2 which return uppercase `"UID"`.
+
+---
+
+## Audio Channel Configuration
+
+| Audio Channel | Description | Use Case |
+|---------------|-------------|----------|
+| `Mono1Speaker` | Single channel, one speaker | Phone recordings with single participant |
+| `Mono2Speaker` | Single channel, two speakers | Conference calls mixed to mono |
+| `Stereo` | Two channels (default) | Separate speaker channels |
+
+For stereo recordings, `salesPersonAudioChannel` specifies which channel contains the agent audio:
+- `1` = left channel (default)
+- `2` = right channel
+
 ## Processing Pipeline
 
-1. **Conversation Creation**: Creates metadata record and user/team mappings
-2. **Audio Upload**: Use returned UID for audio file uploads via separate endpoint
-3. **ASR Processing**: Automatic speech-to-text with configurable priority
-4. **Analysis Available**: Results accessible via Capturi dashboard and APIs
+1. **Create Conversation** → Returns a UID
+2. **Upload Audio** → Use the UID with the [audio upload endpoint](readme.md#upload-audio)
+3. **ASR Processing** → Automatic speech-to-text (conversations >24h old get lower priority)
+4. **Analysis Available** → Results accessible via Capturi dashboard
 
-**Priority Logic**: Conversations older than 24 hours are processed with `LowPriority`, others get `DefaultPriority`.
+## Custom Properties
+
+- **Text properties** (`customProp1`–`customProp10`): 10 custom text fields
+- **Number properties** (`customNumberProp1`–`customNumberProp9`): 9 custom numeric fields
+- All custom properties must be configured in Capturi before use
+- Contact support to configure custom properties for your organization
 
 ## Error Handling
 
 | Status Code | Description |
 |-------------|-------------|
-| 400 | Bad Request - Invalid JSON, missing required fields, validation errors |
-| 409 | Conflict - ExternalIdentity already exists (must be unique) |
-| 500 | Internal Server Error - User creation failed or downstream service issues |
-
-## Implementation Notes
-
-- API schema may change without notice - implement defensive parsing
-- Custom properties must be pre-configured in Capturi before use
-- ExternalIdentity uniqueness is enforced at organization level
-- For support issues, reference this documentation or contact support directly
+| 200 | Success — conversation created |
+| 400 | Bad Request — invalid JSON, missing required fields, or validation errors |
+| 409 | Conflict — `externalIdentity` already exists for this organization |
+| 500 | Internal Server Error — downstream service issues |
