@@ -238,10 +238,56 @@ For stereo recordings, `salesPersonAudioChannel` specifies which channel contain
 - `1` = left channel (default)
 - `2` = right channel
 
+---
+
+## Upload Audio
+
+After creating a conversation, upload audio as a multipart form file.
+
+### Upload by Capturi Conversation UID
+
+**`POST /v1/audio/{conversation_uid}`**
+
+Use the UID returned from the create conversation response.
+
+### Upload by External ID
+
+**`POST /v1/audio/external/{external_id}`**
+
+Use the same external ID you provided when creating the conversation (`externalId` for v1, `externalIdentity` for v2/v3).
+
+### Form Fields
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `data` | file | ✅ | Audio file (binary) |
+| `spokenLanguage` | string | ❌ | Language code, e.g. `da-DK`, `en-US` |
+| `stereoConfig` | string | ❌ | `"AgentChannelOne"` or `"AgentChannelTwo"` |
+| `monoConfig` | string | ❌ | `"AgentOnly"`, `"CustomerOnly"`, or `"TwoSpeakers"` |
+
+**Content-Type:** `multipart/form-data`
+**Max upload size:** 1 GB
+**Response:** 200 OK on success
+
+### Upload Audio via Webhook (Async)
+
+For conversations created via the webhook endpoint (async flow).
+
+**`POST /v1/audio/webhook`**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `data` | file | ✅ | Audio file (binary) |
+| `externalId` | string | ✅ | Same external identity used when creating the conversation |
+
+> **Note:** Requires a webhook configuration for your organization. Contact Capturi to set this up.
+
+---
+
 ## Processing Pipeline
 
 1. **Create Conversation** → Returns a UID
-2. **Upload Audio** → Use the UID with the [audio upload endpoint](readme.md#upload-audio)
+2. **Upload Audio** → Use the UID with the audio upload endpoints above
 3. **ASR Processing** → Automatic speech-to-text (conversations >24h old get lower priority)
 4. **Analysis Available** → Results accessible via Capturi dashboard
 

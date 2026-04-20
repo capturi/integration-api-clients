@@ -29,58 +29,9 @@ https://integrations.capturi.ai
 
 ## Endpoints
 
-### Conversations
+### Conversations & Audio Upload
 
-See [conversation.md](conversation.md) for full conversation API documentation (v1, v2, v3).
-
----
-
-### Upload Audio
-
-Audio is uploaded as a multipart form file in the `data` field.
-
-#### Upload by Capturi Conversation UID
-
-- **Path:** `POST /v1/audio/{conversation_uid}`
-- **Content-Type:** `multipart/form-data`
-
-#### Upload by External ID
-
-- **Path:** `POST /v1/audio/external/{external_id}`
-- **Content-Type:** `multipart/form-data`
-
-The `external_id` must match the ID used when creating the conversation (`externalId` for v1, `externalIdentity` for v2/v3).
-
-#### Form Fields
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `data` | file | ✅ | Audio file (binary) |
-| `spokenLanguage` | string | ❌ | Language code, e.g. `da-DK`, `en-US` |
-| `stereoConfig` | string | ❌ | `"AgentChannelOne"` or `"AgentChannelTwo"` |
-| `monoConfig` | string | ❌ | `"AgentOnly"`, `"CustomerOnly"`, or `"TwoSpeakers"` |
-
-#### Response
-
-- **200 OK** on success
-
-**Max upload size:** 1 GB
-
----
-
-### Upload Audio via Webhook (Async)
-
-For conversations created via the webhook endpoint (async flow).
-
-- **Path:** `POST /v1/audio/webhook`
-- **Content-Type:** `multipart/form-data`
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `data` | file | ✅ | Audio file (binary) |
-| `externalId` | string | ✅ | Same external identity used when creating the conversation |
-
-> **Note:** Requires a webhook configuration for your organization. Contact Capturi to set this up.
+See [conversation.md](conversation.md) for full documentation on conversation creation (v1, v2, v3) and audio upload.
 
 ---
 
