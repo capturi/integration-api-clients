@@ -15,7 +15,7 @@ import (
 	"time"
 )
 
-const apiURL = "https://integrations.capturi.ai/v1/"
+const apiURL = "https://integrations.capturi.ai/"
 
 func main() {
 	//get api token from environment
@@ -32,21 +32,17 @@ func main() {
 
 	//Create conversation
 	createConversationRequest := CreateConversationRequest{
-		ExternalID:       uuid.NewString(),
-		NumberOfSpeakers: 1,
-		PhoneNumber:      "11223344",
-		Title:            "Demo call",
-		Labels:           nil,
-		DateTime:         time.Now(),
-		Outcome:          "Success",
-		OutcomeReason:    "We have a great product",
+		ExternalIdentity: uuid.NewString(),
 		AgentID:          uuid.NewString(),
 		AgentName:        "Agent Schmidt",
 		AgentEmail:       "agent-schmidt@capturi.com",
+		DateTime:         time.Now(),
+		Subject:          "Demo call",
+		Customer:         "11223344",
 	}
 
 	createConversationURL := *base
-	createConversationURL.Path += "conversation"
+	createConversationURL.Path += "v3/conversation"
 	//body
 	body := new(bytes.Buffer)
 	err = json.NewEncoder(body).Encode(createConversationRequest)
@@ -86,7 +82,7 @@ func main() {
 		log.Fatalf("Failed to decode response. Error: %v", err)
 	}
 
-	log.Printf("created a new conversation with uid: %s, and external id: %s", conversationCreatedResponse.UID, createConversationRequest.ExternalID)
+	log.Printf("created a new conversation with uid: %s, and external identity: %s", conversationCreatedResponse.UID, createConversationRequest.ExternalIdentity)
 
 	//Let's add some audio to the conversation.
 
@@ -103,7 +99,7 @@ func main() {
 	writer.Close()
 
 	uploadAudioURL := *base
-	uploadAudioURL.Path += fmt.Sprintf("audio/%s", conversationCreatedResponse.UID)
+	uploadAudioURL.Path += fmt.Sprintf("v1/audio/%s", conversationCreatedResponse.UID)
 
 	req, err = http.NewRequest("POST", uploadAudioURL.String(), body)
 	if err != nil {
@@ -136,25 +132,16 @@ func main() {
 }
 
 type CreateConversationRequest struct {
-	ExternalID       string    `json:"externalId"`
-	NumberOfSpeakers int       `json:"numberOfSpeakers"`
-	PhoneNumber      string    `json:"phoneNumber"`
-	Title            string    `json:"title"`
-	Labels           []string  `json:"labels"`
-	DateTime         time.Time `json:"datetime"`
-	Outcome          string    `json:"outcome"`
-	OutcomeReason    string    `json:"outcomeReason"`
+	ExternalIdentity string    `json:"externalIdentity"`
 	AgentID          string    `json:"agentId"`
 	AgentName        string    `json:"agentName"`
 	AgentEmail       string    `json:"agentEmail"`
-	Nps              float32   `json:"nps"`
-	Score            string    `json:"score"`
-	Direction        string    `json:"direction"`
-	TimeToAnswer     int32     `json:"timeToAnswer"`
-	Channel          string    `json:"channel"`
-	CaseID           string    `json:"caseId"`
+	DateTime         time.Time `json:"dateTime"`
+	Subject          string    `json:"subject"`
+	Customer         string    `json:"customer"`
+	Labels           []string  `json:"labels,omitempty"`
 }
 
 type ConversationCreatedResponse struct {
-	UID string
+	UID string `json:"uid"`
 }

@@ -8,7 +8,7 @@ namespace AudioUploadClientExample
 {
     public static class Program
     {
-        private const string BaseApiUrl = "https://integrations.capturi.ai/v1/";
+        private const string BaseApiUrl = "https://integrations.capturi.ai/";
         private static string? _apiToken;
         private const bool UploadAudioUsingExternalConversationId = false;
 
@@ -64,7 +64,7 @@ namespace AudioUploadClientExample
         {
             using var httpClient  = SetupHttpClient();
             var request = CreateConversationRequest(externalConversationId);
-            var responseCreateConversation = await httpClient.PostAsJsonAsync("conversation", request);
+            var responseCreateConversation = await httpClient.PostAsJsonAsync("v3/conversation", request);
             if (responseCreateConversation.StatusCode != HttpStatusCode.OK)
             {
                 var contents = await responseCreateConversation.Content.ReadAsStringAsync();
@@ -82,24 +82,21 @@ namespace AudioUploadClientExample
         {
             var conversationRequest = new
             {
-                ExternalId = externalConversationId,
-                NumberOfSpeakers = 1,
-                PhoneNumber = "11223344",
-                Title = "Demo call",
-                Labels = new List<string>(),
-                DateTime = DateTime.UtcNow,
-                Outcome = "Success",
-                OutcomeReason = "We have a great product",
+                ExternalIdentity = externalConversationId,
                 AgentId = Guid.NewGuid(),
                 AgentName = "Agent Schmidt",
                 AgentEmail = "agent-schmidt@capturi.com",
+                DateTime = DateTime.UtcNow,
+                Subject = "Demo call",
+                Customer = "11223344",
+                Labels = new List<string>(),
             };
             return conversationRequest;
         }
         
         private class CreateConversationResponse
         {
-            [JsonPropertyName("UID")]
+            [JsonPropertyName("uid")]
             public string Uid { set; get; } = string.Empty;
         }
         
@@ -108,7 +105,7 @@ namespace AudioUploadClientExample
         {
             var httpClient = SetupHttpClient();
             var multipartFormDataContent = SetupMultipartFormDataContent(fileName);
-            var response = await httpClient.PostAsync($"audio/{conversationId}", multipartFormDataContent);
+            var response = await httpClient.PostAsync($"v1/audio/{conversationId}", multipartFormDataContent);
             if (response.StatusCode != HttpStatusCode.OK)
             {
                 var contents = await response.Content.ReadAsStringAsync();
@@ -122,7 +119,7 @@ namespace AudioUploadClientExample
             var httpClient = SetupHttpClient();
             var multipartFormDataContent = SetupMultipartFormDataContent(audioFileName);
 
-            var response = await httpClient.PostAsync($"audio/external/{externalConversationId}", multipartFormDataContent);
+            var response = await httpClient.PostAsync($"v1/audio/external/{externalConversationId}", multipartFormDataContent);
             if (response.StatusCode != HttpStatusCode.OK)
             {
                 var contents = await response.Content.ReadAsStringAsync();
