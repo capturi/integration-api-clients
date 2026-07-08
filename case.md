@@ -180,7 +180,7 @@ Same case-level fields as the Create or Update endpoint above, plus a single `me
 
 **`POST /v1/case/messages`**
 
-Adds a message to an existing case. **If the case doesn't exist, the API returns 200 with no action taken** (the message is silently dropped).
+Adds a message to an existing case. The response reflects the status returned by the downstream case service — if the case doesn't exist, expect a non-2xx status. Use `PUT /v1/case/messages` if you want the case created when it's missing.
 
 #### Request Body
 
@@ -218,7 +218,8 @@ Adds a message to an existing case. **If the case doesn't exist, the API returns
 
 #### Response
 
-- **200 OK** on success (even if case doesn't exist)
+- **200 OK** on success
+- A non-2xx status if the case doesn't exist (propagated from the case service)
 
 ---
 
@@ -344,5 +345,5 @@ Use the following template (fields can be modified, but the provided fields are 
 |-------------|-------------|
 | 200 | Success |
 | 400 | Bad Request — Invalid JSON, missing required fields, or validation errors |
-| 409 | Conflict — `externalIdentity` / `caseUid` already exists (conversation endpoints) |
+| 409 | Conflict — `caseUid` already exists |
 | 500 | Internal Server Error — Downstream service issues |
