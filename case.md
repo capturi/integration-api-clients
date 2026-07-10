@@ -109,7 +109,7 @@ Creates a new case or updates an existing one if a case with the given `caseUid`
 |-------|------|----------|-------------|
 | `name` | string | ✅ | Contact display name |
 | `email` | string | ✅ | Contact email address |
-| `id` | string | ❌ | Contact identifier (used for agent lookup on outbound messages) |
+| `id` | string | ⚠️ | Contact identifier. **Required** on `from` for **outbound** messages (used to create/look up the sending agent — an empty value is rejected with `400`). Ignored on `from` for inbound messages and on all `to` contacts. |
 
 #### Response
 
